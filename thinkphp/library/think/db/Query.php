@@ -964,8 +964,7 @@ class Query
      *                      fragment:url锚点,
      *                      var_page:分页变量,
      *                      list_rows:每页数量
-     *                      type:分页类名,
-     *                      namespace:分页类命名空间
+     *                      type:分页类名
      * @return \think\paginator\Collection
      * @throws DbException
      */
@@ -1717,8 +1716,8 @@ class Query
      * @param array|string|Query|\Closure $data
      * @return Collection|false|\PDOStatement|string
      * @throws DbException
-     * @throws Exception
-     * @throws PDOException
+     * @throws ModelNotFoundException
+     * @throws DataNotFoundException
      */
     public function select($data = null)
     {
@@ -1789,11 +1788,7 @@ class Query
                 }
             }
         } elseif (!empty($options['fail'])) {
-            if (!empty($this->model)) {
-                throw new ModelNotFoundException('model data Not Found:' . $this->model, $this->model, $options);
-            } else {
-                throw new DataNotFoundException('table data not Found:' . $options['table'], $options['table'], $options);
-            }
+            $this->throwNotFound($options);
         }
         return $resultSet;
     }
@@ -1804,8 +1799,8 @@ class Query
      * @param array|string|Query|\Closure $data
      * @return array|false|\PDOStatement|string|Model
      * @throws DbException
-     * @throws Exception
-     * @throws PDOException
+     * @throws ModelNotFoundException
+     * @throws DataNotFoundException
      */
     public function find($data = null)
     {
@@ -1874,15 +1869,27 @@ class Query
                 }
             }
         } elseif (!empty($options['fail'])) {
-            if (!empty($this->model)) {
-                throw new ModelNotFoundException('model data Not Found:' . $this->model, $this->model, $options);
-            } else {
-                throw new DataNotFoundException('table data not Found:' . $options['table'], $options['table'], $options);
-            }
+            $this->throwNotFound($options);
         } else {
             $data = null;
         }
         return $data;
+    }
+
+    /**
+     * 查询失败 抛出异常
+     * @access public
+     * @param array $options 查询参数
+     * @throws ModelNotFoundException
+     * @throws DataNotFoundException
+     */
+    protected function throwNotFound($options = [])
+    {
+        if (!empty($this->model)) {
+            throw new ModelNotFoundException('model data Not Found:' . $this->model, $this->model, $options);
+        } else {
+            throw new DataNotFoundException('table data not Found:' . $options['table'], $options['table'], $options);
+        }
     }
 
     /**
@@ -1891,8 +1898,8 @@ class Query
      * @param array|string|Query|\Closure $data
      * @return array|\PDOStatement|string|Model
      * @throws DbException
-     * @throws Exception
-     * @throws PDOException
+     * @throws ModelNotFoundException
+     * @throws DataNotFoundException
      */
     public function selectOrFail($data = null)
     {
@@ -1905,8 +1912,8 @@ class Query
      * @param array|string|Query|\Closure $data
      * @return array|\PDOStatement|string|Model
      * @throws DbException
-     * @throws Exception
-     * @throws PDOException
+     * @throws ModelNotFoundException
+     * @throws DataNotFoundException
      */
     public function findOrFail($data = null)
     {
