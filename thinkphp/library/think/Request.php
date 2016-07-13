@@ -623,7 +623,7 @@ class Request
             // 当前请求参数和URL地址中的参数合并
             $this->param = array_merge($this->route(false), $this->get(false), $vars);
         }
-        return false === $name ? $this->param : $this->input($this->param, $name, $default, $filter);
+        return $this->input($this->param, $name, $default, $filter);
     }
 
     /**
@@ -639,7 +639,7 @@ class Request
         if (is_array($name)) {
             return $this->route = array_merge($this->route, $name);
         }
-        return false === $name ? $this->route : $this->input($this->route, $name, $default, $filter);
+        return $this->input($this->route, $name, $default, $filter);
     }
 
     /**
@@ -657,7 +657,7 @@ class Request
         } elseif (empty($this->get)) {
             $this->get = $_GET;
         }
-        return false === $name ? $this->get : $this->input($this->get, $name, $default, $filter);
+        return $this->input($this->get, $name, $default, $filter);
     }
 
     /**
@@ -675,7 +675,7 @@ class Request
         } elseif (empty($this->post)) {
             $this->post = $_POST;
         }
-        return false === $name ? $this->post : $this->input($this->post, $name, $default, $filter);
+        return $this->input($this->post, $name, $default, $filter);
     }
 
     /**
@@ -692,9 +692,14 @@ class Request
             return $this->put = is_null($this->put) ? $name : array_merge($this->put, $name);
         }
         if (is_null($this->put)) {
-            parse_str(file_get_contents('php://input'), $this->put);
+            $content = file_get_contents('php://input');
+            if (strpos($content, '":')) {
+                $this->put = json_decode($content, true);
+            } else {
+                parse_str($content, $this->put);
+            }
         }
-        return false === $name ? $this->put : $this->input($this->put, $name, $default, $filter);
+        return $this->input($this->put, $name, $default, $filter);
     }
 
     /**
@@ -713,7 +718,7 @@ class Request
         if (is_null($this->delete)) {
             parse_str(file_get_contents('php://input'), $this->delete);
         }
-        return false === $name ? $this->delete : $this->input($this->delete, $name, $default, $filter);
+        return $this->input($this->delete, $name, $default, $filter);
     }
 
     /**
@@ -730,7 +735,7 @@ class Request
         } elseif (empty($this->request)) {
             $this->request = $_REQUEST;
         }
-        return false === $name ? $this->request : $this->input($this->request ?: $_REQUEST, $name, $default, $filter);
+        return $this->input($this->request ?: $_REQUEST, $name, $default, $filter);
     }
 
     /**
@@ -748,7 +753,7 @@ class Request
         } elseif (empty($this->session)) {
             $this->session = Session::get();
         }
-        return false === $name ? $this->session : $this->input($this->session, $name, $default, $filter);
+        return $this->input($this->session, $name, $default, $filter);
     }
 
     /**
@@ -766,7 +771,7 @@ class Request
         } elseif (empty($this->cookie)) {
             $this->cookie = $_COOKIE;
         }
-        return false === $name ? $this->cookie : $this->input($this->cookie, $name, $default, $filter);
+        return $this->input($this->cookie, $name, $default, $filter);
     }
 
     /**
@@ -784,7 +789,7 @@ class Request
         } elseif (empty($this->server)) {
             $this->server = $_SERVER;
         }
-        return false === $name ? $this->server : $this->input($this->server, $name, $default, $filter);
+        return $this->input($this->server, false === $name ? false : strtoupper($name), $default, $filter);
     }
 
     /**
@@ -804,44 +809,43 @@ class Request
         if (!empty($files)) {
             // 处理上传文件
             $array = [];
-            $n     = 0;
             foreach ($files as $key => $file) {
                 if (is_array($file['name'])) {
+                    $item  = [];
                     $keys  = array_keys($file);
                     $count = count($file['name']);
                     for ($i = 0; $i < $count; $i++) {
-                        $array[$n]['key'] = $key;
-                        foreach ($keys as $_key) {
-                            $array[$n][$_key] = $file[$_key][$i];
-                        }
-                        $n++;
-                    }
-                } else {
-                    $array = $files;
-                    break;
-                }
-            }
-
-            if ('' === $name) {
-                // 获取全部文件
-                $item = [];
-                foreach ($array as $key => $val) {
-                    if ($val instanceof File) {
-                        $item[$key] = $val;
-                    } else {
-                        if (empty($val['tmp_name'])) {
+                        if (empty($file['tmp_name'][$i])) {
                             continue;
                         }
-                        $item[$key] = (new File($val['tmp_name']))->setUploadInfo($val);
+                        $temp['key'] = $key;
+                        foreach ($keys as $_key) {
+                            $temp[$_key] = $file[$_key][$i];
+                        }
+                        $item[] = (new File($temp['tmp_name']))->setUploadInfo($temp);
+                    }
+                    $array[$key] = $item;
+                } else {
+                    if ($file instanceof File) {
+                        $array[$key] = $file;
+                    } else {
+                        if (empty($file['tmp_name'])) {
+                            continue;
+                        }
+                        $array[$key] = (new File($file['tmp_name']))->setUploadInfo($file);
                     }
                 }
-                return $item;
+            }
+            if (strpos($name, '.')) {
+                list($name, $sub) = explode('.', $name);
+            }
+            if ('' === $name) {
+                // 获取全部文件
+                return $array;
+            } elseif (isset($sub) && isset($array[$name][$sub])) {
+                return $array[$name][$sub];
             } elseif (isset($array[$name])) {
-                if ($array[$name] instanceof File) {
-                    return $array[$name];
-                } elseif (!empty($array[$name]['tmp_name'])) {
-                    return (new File($array[$name]['tmp_name']))->setUploadInfo($array[$name]);
-                }
+                return $array[$name];
             }
         }
         return null;
@@ -861,7 +865,7 @@ class Request
         } elseif (empty($this->env)) {
             $this->env = $_ENV;
         }
-        return false === $name ? $this->env : $this->input($this->env, strtoupper($name), $default, $filter);
+        return $this->input($this->env, false === $name ? false : strtoupper($name), $default, $filter);
     }
 
     /**
@@ -902,13 +906,17 @@ class Request
     /**
      * 获取变量 支持过滤和默认值
      * @param array         $data 数据源
-     * @param string        $name 字段名
+     * @param string|false  $name 字段名
      * @param mixed         $default 默认值
      * @param string|array  $filter 过滤函数
      * @return mixed
      */
     public function input($data = [], $name = '', $default = null, $filter = null)
     {
+        if (false === $name) {
+            // 获取原始数据
+            return $data;
+        }
         $name = (string) $name;
         if ('' != $name) {
             // 解析name

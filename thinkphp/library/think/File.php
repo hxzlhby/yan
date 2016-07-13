@@ -11,6 +11,7 @@
 
 namespace think;
 
+use SplFileInfo;
 use SplFileObject;
 
 class File extends SplFileObject
@@ -78,7 +79,7 @@ class File extends SplFileObject
             return true;
         }
 
-        if (mkdir($path, 0777, true)) {
+        if (mkdir($path, 0644, true)) {
             return true;
         } else {
             $this->error = "目录 {$path} 创建失败！";
@@ -157,7 +158,7 @@ class File extends SplFileObject
             return false;
         }
 
-        return new \SplFileInfo($path . $savename);
+        return new SplFileInfo($path . $savename);
     }
 
     /**
