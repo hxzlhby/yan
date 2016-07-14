@@ -18,7 +18,10 @@
     "require": {
         "php": ">=5.4.0",
         "topthink/framework": "*",
-        "topthink/think-angular": "^1.0"
+        "topthink/think-angular": "^1.0",
+        "topthink/think-captcha": "^1.0",
+        "topthink/think-helper": "^1.0",
+        "topthink/think-queue": "dev-master"
     },
     "extra": {
         "think-path": "thinkphp"
