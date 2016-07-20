@@ -77,6 +77,10 @@ class App
     {
         is_null($request) && $request = Request::instance();
 
+        if ('ico' == $request->ext()) {
+            throw new HttpException(404, 'ico file not exists');
+        }
+
         $config = self::initCommon();
 
         try {
@@ -333,9 +337,9 @@ class App
         } catch (\ReflectionException $e) {
             // 操作不存在
             if (method_exists($instance, '_empty')) {
-                $method = new \ReflectionMethod($instance, '_empty');
-                $data   = $method->invokeArgs($instance, [$action, '']);
-                self::$debug && Log::record('[ RUN ] ' . $method->__toString(), 'info');
+                $reflect = new \ReflectionMethod($instance, '_empty');
+                $data    = $reflect->invokeArgs($instance, [$action]);
+                self::$debug && Log::record('[ RUN ] ' . $reflect->__toString(), 'info');
             } else {
                 throw new HttpException(404, 'method not exists:' . (new \ReflectionClass($instance))->getName() . '->' . $action);
             }
@@ -461,11 +465,6 @@ class App
      */
     public static function routeCheck($request, array $config)
     {
-        // 检测URL禁用后缀
-        if ($config['url_deny_suffix'] && preg_match('/\.(' . $config['url_deny_suffix'] . ')$/i', $request->pathinfo())) {
-            throw new Exception('url suffix deny:' . $request->ext());
-        }
-
         $path   = $request->path();
         $depr   = $config['pathinfo_depr'];
         $result = false;

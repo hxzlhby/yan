@@ -26,6 +26,7 @@ class Route
         'POST'    => [],
         'PUT'     => [],
         'DELETE'  => [],
+        'PATCH'   => [],
         'HEAD'    => [],
         'OPTIONS' => [],
         '*'       => [],
@@ -59,7 +60,7 @@ class Route
     // 域名绑定
     private static $bind = [];
     // 当前分组
-    private static $group;
+    private static $group = '';
     // 当前参数
     private static $option = [];
 
@@ -242,7 +243,7 @@ class Route
             self::$rules[$type][$rule] = ['rule' => $rule, 'route' => $route, 'var' => $vars, 'option' => $option, 'pattern' => $pattern];
             if ('*' == $type) {
                 // 注册路由快捷方式
-                foreach (['GET', 'POST', 'PUT', 'DELETE', 'HEAD', 'OPTIONS'] as $method) {
+                foreach (['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD', 'OPTIONS'] as $method) {
                     self::$rules[$method][$rule] = true;
                 }
             }
@@ -257,7 +258,11 @@ class Route
      */
     public static function setGroup($name)
     {
-        self::$group = $name;
+        if (self::$group) {
+            self::$group = self::$group . '/' . ltrim($name, '/');
+        } else {
+            self::$group = $name;
+        }
     }
 
     /**
@@ -291,9 +296,11 @@ class Route
         if (!empty($name)) {
             // 分组
             if ($routes instanceof \Closure) {
+                $curentGroup = self::$group;
                 self::setGroup($name);
                 call_user_func_array($routes, []);
-                self::setGroup(null);
+                self::$group = $curentGroup;
+
                 self::$rules[$type][$name]['route']   = '';
                 self::$rules[$type][$name]['var']     = self::parseVar($name);
                 self::$rules[$type][$name]['option']  = $option;
@@ -317,7 +324,7 @@ class Route
                 self::$rules[$type][$name] = ['rule' => $item, 'route' => '', 'var' => [], 'option' => $option, 'pattern' => $pattern];
             }
             if ('*' == $type) {
-                foreach (['GET', 'POST', 'PUT', 'DELETE', 'HEAD', 'OPTIONS'] as $method) {
+                foreach (['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD', 'OPTIONS'] as $method) {
                     if (!isset(self::$rules[$method][$name])) {
                         self::$rules[$method][$name] = true;
                     } else {
@@ -406,6 +413,20 @@ class Route
     public static function delete($rule, $route = '', $option = [], $pattern = [])
     {
         self::rule($rule, $route, 'DELETE', $option, $pattern);
+    }
+
+    /**
+     * 注册PATCH路由
+     * @access public
+     * @param string    $rule 路由规则
+     * @param string    $route 路由地址
+     * @param array     $option 路由参数
+     * @param array     $pattern 变量规则
+     * @return void
+     */
+    public static function patch($rule, $route = '', $option = [], $pattern = [])
+    {
+        self::rule($rule, $route, 'PATCH', $option, $pattern);
     }
 
     /**
@@ -672,15 +693,14 @@ class Route
         if ($checkDomain) {
             self::checkDomain($request);
         }
+        // 获取当前请求类型的路由规则
+        $rules = self::$rules[$request->method()];
 
         // 检测URL绑定
         $return = self::checkUrlBind($url, $rules, $depr);
         if (false !== $return) {
             return $return;
         }
-
-        // 获取当前请求类型的路由规则
-        $rules = self::$rules[$request->method()];
 
         if (isset($rules[$url])) {
             // 静态路由规则检测
@@ -746,7 +766,7 @@ class Route
                     continue;
                 }
                 if ($group) {
-                    $rule = $group . '/' . ltrim($rule, '/');
+                    $rule = $group . ($rule ? '/' . ltrim($rule, '/') : '');
                 }
                 $result = self::checkRule($rule, $route, $url, $pattern, $option);
                 if (false !== $result) {
@@ -917,7 +937,8 @@ class Route
         // 请求类型检测
         if ((isset($option['method']) && false === stripos($option['method'], $request->method()))
             || (isset($option['ext']) && false === stripos($option['ext'], $request->ext())) // 伪静态后缀检测
-             || (isset($option['domain']) && !in_array($option['domain'], [$_SERVER['HTTP_HOST'], self::$subDomain])) // 域名检测
+             || (isset($option['deny_ext']) && false !== stripos($option['deny_ext'], $request->ext()))
+            || (isset($option['domain']) && !in_array($option['domain'], [$_SERVER['HTTP_HOST'], self::$subDomain])) // 域名检测
              || (!empty($option['https']) && !$request->isSsl()) // https检测
              || (!empty($option['before_behavior']) && false === Hook::exec($option['before_behavior'], '', $url)) // 行为检测
              || (!empty($option['callback']) && is_callable($option['callback']) && false === call_user_func($option['callback'])) // 自定义检测

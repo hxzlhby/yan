@@ -43,6 +43,8 @@ class Relation
     protected $alias;
     // 当前关联的JOIN类型
     protected $joinType;
+    // 关联模型查询对象
+    protected $query;
 
     /**
      * 架构函数
@@ -409,7 +411,7 @@ class Relation
         $this->localKey   = $localKey;
         $this->alias      = $alias;
         $this->joinType   = $joinType;
-
+        $this->query      = (new $model)->db();
         // 返回关联的模型对象
         return $this;
     }
@@ -433,7 +435,7 @@ class Relation
         $this->localKey   = $otherKey;
         $this->alias      = $alias;
         $this->joinType   = $joinType;
-
+        $this->query      = (new $model)->db();
         // 返回关联的模型对象
         return $this;
     }
@@ -455,7 +457,7 @@ class Relation
         $this->foreignKey = $foreignKey;
         $this->localKey   = $localKey;
         $this->alias      = $alias;
-
+        $this->query      = (new $model)->db();
         // 返回关联的模型对象
         return $this;
     }
@@ -481,7 +483,7 @@ class Relation
         $this->throughKey = $throughKey;
         $this->localKey   = $localKey;
         $this->alias      = $alias;
-
+        $this->query      = (new $model)->db();
         // 返回关联的模型对象
         return $this;
     }
@@ -505,7 +507,7 @@ class Relation
         $this->localKey   = $localKey;
         $this->middle     = $table;
         $this->alias      = $alias;
-
+        $this->query      = (new $model)->db();
         // 返回关联的模型对象
         return $this;
     }
@@ -638,14 +640,16 @@ class Relation
             $id         = $data->$relationFk;
         }
         // 删除中间表数据
-        $pk                       = $this->parent->getPk();
-        $pivot[$this->localKey]   = $this->parent->$pk;
-        $pivot[$this->foreignKey] = is_array($id) ? ['in', $id] : $id;
-        $query                    = clone $this->parent->db();
+        $pk                     = $this->parent->getPk();
+        $pivot[$this->localKey] = $this->parent->$pk;
+        if (isset($id)) {
+            $pivot[$this->foreignKey] = is_array($id) ? ['in', $id] : $id;
+        }
+        $query = clone $this->parent->db();
         $query->table($this->middle)->where($pivot)->delete();
 
         // 删除关联表数据
-        if ($relationDel) {
+        if (isset($id) && $relationDel) {
             $model = $this->model;
             $model::destroy($id);
         }
@@ -653,14 +657,12 @@ class Relation
 
     public function __call($method, $args)
     {
-        if ($this->model) {
-            $model = new $this->model;
-            $db    = $model->db();
+        if ($this->query) {
             switch ($this->type) {
                 case self::HAS_MANY:
                     if (isset($this->parent->{$this->localKey})) {
                         // 关联查询带入关联条件
-                        $db->where($this->foreignKey, $this->parent->{$this->localKey});
+                        $this->query->where($this->foreignKey, $this->parent->{$this->localKey});
                     }
                     break;
                 case self::HAS_MANY_THROUGH:
@@ -671,13 +673,18 @@ class Relation
                     $pk           = (new $this->model)->getPk();
                     $throughKey   = $this->throughKey;
                     $modelTable   = $this->parent->getTable();
-                    $result       = $db->field($alias . '.*')->alias($alias)
+                    $result       = $this->query->field($alias . '.*')->alias($alias)
                         ->join($throughTable, $throughTable . '.' . $pk . '=' . $alias . '.' . $throughKey)
                         ->join($modelTable, $modelTable . '.' . $this->localKey . '=' . $throughTable . '.' . $this->foreignKey)
                         ->where($throughTable . '.' . $this->foreignKey, $this->parent->{$this->localKey});
                     break;
             }
-            return call_user_func_array([$db, $method], $args);
+            $result = call_user_func_array([$this->query, $method], $args);
+            if ($result instanceof \think\db\Query) {
+                return $this;
+            } else {
+                return $result;
+            }
         } else {
             throw new Exception('method not exists:' . __CLASS__ . '->' . $method);
         }
