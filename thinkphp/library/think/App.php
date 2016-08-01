@@ -82,7 +82,7 @@ class App
         }
 
         $config = self::initCommon();
-
+        $request->filter($config['default_filter']);
         try {
 
             // 开启多语言机制
@@ -104,6 +104,7 @@ class App
             }
             // 记录当前调度信息
             $request->dispatch($dispatch);
+
             // 记录路由信息
             self::$debug && Log::record('[ ROUTE ] ' . var_export($dispatch, true), 'info');
             // 监听app_begin
@@ -238,8 +239,9 @@ class App
             foreach ($params as $param) {
                 $name  = $param->getName();
                 $class = $param->getClass();
-                if ($class && 'think\Request' == $class->getName()) {
-                    $args[] = Request::instance();
+                if ($class) {
+                    $className = $class->getName();
+                    $args[]    = method_exists($className, 'instance') ? $className::instance() : new $className();
                 } elseif (1 == $type && !empty($vars)) {
                     $args[] = array_shift($vars);
                 } elseif (0 == $type && isset($vars[$name])) {
@@ -278,7 +280,10 @@ class App
             if ($bind) {
                 // 绑定模块
                 list($bindModule) = explode('/', $bind);
-                if ($module == $bindModule) {
+                if (empty($result[0])) {
+                    $module    = $bindModule;
+                    $available = true;
+                } elseif ($module == $bindModule) {
                     $available = true;
                 }
             } elseif (!in_array($module, $config['deny_module_list']) && is_dir(APP_PATH . $module)) {
@@ -361,7 +366,7 @@ class App
             self::$debug = Config::get('app_debug');
             if (!self::$debug) {
                 ini_set('display_errors', 'Off');
-            } else {
+            } elseif (!IS_CLI) {
                 //重新申请一块比较大的buffer
                 if (ob_get_level() > 0) {
                     $output = ob_get_clean();
@@ -414,6 +419,8 @@ class App
         // 加载初始化文件
         if (is_file(APP_PATH . $module . 'init' . EXT)) {
             include APP_PATH . $module . 'init' . EXT;
+        } elseif (is_file(RUNTIME_PATH . $module . 'init' . EXT)) {
+            include RUNTIME_PATH . $module . 'init' . EXT;
         } else {
             $path = APP_PATH . $module;
             // 加载模块配置

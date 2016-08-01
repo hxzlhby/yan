@@ -7,4 +7,8 @@ class Index extends Admin
     {
         return $this->fetch();
     }
+    
+    public function test() {
+        return '行为测试';;
+    }
 }

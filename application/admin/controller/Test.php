@@ -1,7 +1,10 @@
 <?php
 namespace app\admin\controller;
-
-class Test
+class Test extends Admin
 {
+    public function index() {
+        return $this->fetch();
+    }
+
 
 }

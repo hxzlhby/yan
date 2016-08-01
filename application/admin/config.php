@@ -23,4 +23,13 @@ return [
         // 标签库标签结束标记
         'taglib_end'   => '}',
     ],
+    
+    //分页配置
+    'paginate'               => [
+        'type'     => 'bootstrap',
+        'var_page' => 'page',
+    ],
+    'list_rows'=>10,//分页设置
+    
+    
 ];

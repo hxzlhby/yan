@@ -2,10 +2,23 @@
 namespace app\admin\controller;
 use think\Request;
 use app\user\api\UserApi;
-class User extends Admin
+use think\Controller;
+class User extends Controller
 {
     public function index()
     {
+        $map = array();
+        $map['status']  =   ['egt',0];
+        if (Request::instance()->has('nickname','param')){
+            $nickname = Request::instance()->param('nickname');
+            if(is_numeric($nickname)){
+                $map['uid|nickname']=   array(['eq',intval($nickname)],array('like','%'.$nickname.'%'),'or');
+            }else{
+                $map['nickname']    =   array('like', '%'.(string)$nickname.'%');
+            }
+        }
+        $list = $this->lists('Member',$map);
+        $this->assign('_list', $list);
         return $this->fetch();
     }
     
