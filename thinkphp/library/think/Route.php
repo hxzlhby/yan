@@ -292,7 +292,7 @@ class Route
         }
         $vars = self::parseVar($rule);
         if (isset($name)) {
-            self::$name[$name] = [$rule, $vars];
+            self::$name[$name] = [$rule, $vars, self::$domain];
         }
         if ($group) {
             if ('*' != $type) {
@@ -658,7 +658,7 @@ class Route
         if (is_array($rules)) {
             self::$rules = $rules;
         } elseif ($rules) {
-            return self::$rules[$rules];
+            return true === $rules ? self::$rules : self::$rules[$rules];
         } else {
             $rules = self::$rules;
             unset($rules['pattern'], $rules['alias'], $rules['domain']);
@@ -670,11 +670,11 @@ class Route
      * 检测子域名部署
      * @access public
      * @param Request   $request Request请求对象
-     * @param array     $rules 当前路由规则
+     * @param array     $currentRules 当前路由规则
      * @param string    $method 请求类型
      * @return void
      */
-    public static function checkDomain($request, &$rules, $method = 'GET')
+    public static function checkDomain($request, &$currentRules, $method = 'GET')
     {
         // 域名规则
         $rules = self::$rules['domain'];
@@ -757,7 +757,7 @@ class Route
                     self::$domainBind = true;
                 } else {
                     self::$domainRule = $item;
-                    $rules            = isset($item[$method]) ? $item[$method] : $item['*'];
+                    $currentRules     = isset($item[$method]) ? $item[$method] : $item['*'];
                 }
             }
         }
