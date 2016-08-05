@@ -10,7 +10,7 @@ require_once(dirname(__FILE__) . '/simple_html_dom.php');
  *         simple_html_dom's official site:
  *              http://sourceforge.net/projects/simplehtmldom
  */
-use phpfetcher\Log;
+use think\Log;
 class Dom extends \phpfetcher\Dom\Api {
     protected $_dom = NULL;
 
@@ -25,7 +25,7 @@ class Dom extends \phpfetcher\Dom\Api {
         if (method_exists($this->_dom, $strMethodName)) {
             return $this->_dom->getElementById($id);
         } else {
-            Log::warning("method $strMethodName not exists");
+            Log::record("method $strMethodName not exists");
             return FALSE;
         }
     }
@@ -35,7 +35,7 @@ class Dom extends \phpfetcher\Dom\Api {
         if (method_exists($this->_dom, $strMethodName)) {
             return $this->_dom->getElementsByTagName($tag);
         } else {
-            Log::warning("method $strMethodName not exists");
+            Log::record("method $strMethodName not exists");
             return FALSE;
         }
     }
@@ -66,7 +66,7 @@ class Dom extends \phpfetcher\Dom\Api {
         if (method_exists($this->_dom, $strMethodName)) {
             return $this->_dom->find($pattern, $idx);
         } else {
-            Log::warning("method $strMethodName not exists");
+            Log::record("method $strMethodName not exists");
             return FALSE;
         }
     }

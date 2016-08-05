@@ -8,7 +8,7 @@
  */
 namespace phpfetcher\Crawler;
 use phpfetcher\Error;
-use phpfetcher\Log;
+use think\Log;
 abstract class Api {
     protected $_arrPostFetchHooks = array();
     protected $_arrPreFetchHooks  = array();
@@ -19,7 +19,7 @@ abstract class Api {
 
     //删除一条已有的爬取规则
     public function delFetchJobs($arrInput) {
-        Log::notice('not implemented');
+        Log::record('not implemented');
     }
 
     //查看已有的爬取规则

@@ -7,7 +7,7 @@
  */
 namespace phpfetcher\Page;
 use phpfetcher\Error;
-use phpfetcher\Log;
+use think\Log;
 class Main extends \phpfetcher\Page\Api {
 
     protected static $_arrField2CurlOpt = array(
@@ -173,7 +173,7 @@ class Main extends \phpfetcher\Page\Api {
     /*
     public function mselId($ids) {
         if ($this->_dom === NULL) {
-            Log::warning('$this->_dom is NULL!');
+            Log::record('$this->_dom is NULL!');
             return NULL;
         }
 
@@ -197,7 +197,7 @@ class Main extends \phpfetcher\Page\Api {
     /*
     public function mselTagName($tags) {
         if ($this->_dom === NULL) {
-            Log::warning('$this->_dom is NULL!');
+            Log::record('$this->_dom is NULL!');
             return NULL;
         }
 
@@ -274,7 +274,7 @@ class Main extends \phpfetcher\Page\Api {
      */
     public function selId($id) {
         if ($this->_dom === NULL) {
-            Log::warning('$this->_dom is NULL!');
+            Log::record('$this->_dom is NULL!');
             return NULL;
         }
 
@@ -292,7 +292,7 @@ class Main extends \phpfetcher\Page\Api {
      */
     public function selTagName($tag) {
         if ($this->_dom === NULL) {
-            Log::warning('$this->_dom is NULL!');
+            Log::record('$this->_dom is NULL!');
             return NULL;
         }
 
@@ -348,7 +348,7 @@ class Main extends \phpfetcher\Page\Api {
             /*
             $this->_dom = new DOMDocument(); //DOMDocument's compatibility is bad
             if (@$this->_dom->loadHTML($this->_strContent) == FALSE) {
-                Log::warning('Failed to call $this->_dom->loadHTML');
+                Log::record('Failed to call $this->_dom->loadHTML');
                 $this->_dom      = NULL;
                 $this->_domxpath = NULL;
             } else {
@@ -358,7 +358,7 @@ class Main extends \phpfetcher\Page\Api {
 
             $this->_dom = new \phpfetcher\Dom\Dom();
             if (@$this->_dom->loadHTML($this->_strContent) == FALSE) {
-                Log::warning('Failed to call $this->_dom->loadHTML');
+                Log::record('Failed to call $this->_dom->loadHTML');
                 $this->_dom      = NULL;
             } 
         }
@@ -379,13 +379,13 @@ class Main extends \phpfetcher\Page\Api {
      */
     public function sel($strPath, $intIndex = NULL, $contextnode = NULL) {
         if ($this->_dom === NULL) {
-            Log::warning('$this->_dom is NULL!');
+            Log::record('$this->_dom is NULL!');
             return NULL;
         }
 
         if ($contextnode !== NULL) {
             //$res = $this->_domxpath->query($strPath, $contextnode);
-            Log::warning('param contextnode is no use because of this function\'s inability');
+            Log::record('param contextnode is no use because of this function\'s inability');
             $res = $this->_dom->sel($strPath, $intIndex);
         } else {
             //$res = $this->_domxpath->query($strPath);
@@ -395,4 +395,3 @@ class Main extends \phpfetcher\Page\Api {
         return $res;
     }
 }
-?>

@@ -8,7 +8,7 @@
  */
 namespace phpfetcher\Crawler;
 use phpfetcher\Util\Trie;
-use phpfetcher\Log;
+use think\Log;
 abstract class Main extends \phpfetcher\Crawler\Api {
     const MAX_DEPTH = 20;
     const MAX_PAGE_NUM = -1;
@@ -149,7 +149,7 @@ abstract class Main extends \phpfetcher\Crawler\Api {
 
 
         if (!empty($arrInvalidJobs)) {
-            Log::notice('Invalid jobs:' . implode(',', $arrInvalidJobs));
+            Log::record('Invalid jobs:' . implode(',', $arrInvalidJobs));
         }
         return $this;
     }
