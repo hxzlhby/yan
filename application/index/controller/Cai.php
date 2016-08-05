@@ -1,7 +1,7 @@
 <?php
 namespace app\index\controller;
 use Ares333\CurlMulti\Core;
-
+use QL\QueryList;
 class Cai
 {
     private $_time = 0;
@@ -66,6 +66,16 @@ class Cai
     }
     
     public function test2() {
-        return $this->_time;
+        //要采集的目标网址
+        $url = "http://www.leiphone.com/";
+        //元素选择器
+        $reg = array(
+            "title" => array(".tit","text"),
+        );
+        //块选择器
+        //采集
+        $hj = QueryList::Query($url,$reg);
+        //输入采集结果
+        dump($hj->data);        
     }
 }
