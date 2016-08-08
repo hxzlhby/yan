@@ -52,16 +52,16 @@ abstract class Model implements \JsonSerializable, \ArrayAccess
     protected $class;
     // 回调事件
     private static $event = [];
-
-    // 数据表主键 复合主键使用数组定义
-    protected $pk;
     // 错误信息
     protected $error;
     // 字段验证规则
     protected $validate;
-
+    // 数据表主键 复合主键使用数组定义
+    protected $pk;
     // 字段属性
     protected $field = [];
+    // 字段类型
+    protected $fieldType = [];
     // 显示属性
     protected $visible = [];
     // 隐藏属性
@@ -86,7 +86,7 @@ abstract class Model implements \JsonSerializable, \ArrayAccess
     // 更新时间字段
     protected $updateTime = 'update_time';
     // 删除时间字段
-    protected $deleteTime = 'delete_time';
+    protected static $deleteTime;
     // 时间字段取出后的默认时间格式
     protected $dateFormat = 'Y-m-d H:i:s';
     // 字段类型或者格式转换
@@ -133,6 +133,10 @@ abstract class Model implements \JsonSerializable, \ArrayAccess
             $this->autoWriteTimestamp = $this->db()->getConfig('auto_timestamp');
         }
 
+        if (is_null(static::$deleteTime)) {
+            static::$deleteTime = $this->db()->getConfig('soft_delete_field');
+        }
+
         // 执行初始化操作
         $this->initialize();
     }
@@ -155,6 +159,19 @@ abstract class Model implements \JsonSerializable, \ArrayAccess
             } else {
                 $query->name($this->name);
             }
+
+            if (!empty($this->field)) {
+                $query->allowField($this->field);
+            }
+
+            if (!empty($this->fieldType)) {
+                $query->setFieldType($this->fieldType);
+            }
+
+            if (!empty($this->pk)) {
+                $query->pk($this->pk);
+            }
+
             // 全局作用域
             if (method_exists($this, 'base')) {
                 call_user_func_array([$this, 'base'], [ & $query]);
@@ -262,7 +279,7 @@ abstract class Model implements \JsonSerializable, \ArrayAccess
      */
     public function setAttr($name, $value, $data = [])
     {
-        if (is_null($value) && $this->autoWriteTimestamp && in_array($name, [$this->createTime, $this->updateTime, $this->deleteTime])) {
+        if (is_null($value) && $this->autoWriteTimestamp && in_array($name, [$this->createTime, $this->updateTime, static::$deleteTime])) {
             // 自动写入的时间戳字段
             if (isset($this->type[$name])) {
                 $type = $this->type[$name];
@@ -764,18 +781,40 @@ abstract class Model implements \JsonSerializable, \ArrayAccess
     /**
      * 删除当前的记录
      * @access public
+     * @param bool  $force 是否强制删除
      * @return integer
      */
-    public function delete()
+    public function delete($force = false)
     {
         if (false === $this->trigger('before_delete', $this)) {
             return false;
         }
 
-        $result = $this->db()->delete($this->data);
+        if (static::$deleteTime && !$force) {
+            // 软删除
+            $this->setAttr(static::$deleteTime, null);
+            $result = $this->isUpdate()->save();
+        } else {
+            $result = $this->db()->delete($this->data);
+        }
 
         $this->trigger('after_delete', $this);
         return $result;
+    }
+
+    /**
+     * 恢复被软删除的记录
+     * @access public
+     * @return integer
+     */
+    public function restore()
+    {
+        if (static::$deleteTime) {
+            // 恢复删除
+            $this->setAttr(static::$deleteTime, 0);
+            return $this->isUpdate()->save();
+        }
+        return false;
     }
 
     /**
@@ -987,6 +1026,10 @@ abstract class Model implements \JsonSerializable, \ArrayAccess
             $result = $data->with($with)->cache($cache);
             $data   = null;
         }
+        if (static::$deleteTime) {
+            // 默认不查询软删除数据
+            $result->where(static::$deleteTime, 0);
+        }
         return $result;
     }
 
@@ -994,9 +1037,10 @@ abstract class Model implements \JsonSerializable, \ArrayAccess
      * 删除记录
      * @access public
      * @param mixed $data 主键列表 支持闭包查询条件
+     * @param bool  $force 是否强制删除
      * @return integer 成功删除的记录数
      */
-    public static function destroy($data)
+    public static function destroy($data, $force = false)
     {
         $model = new static();
         $query = $model->db();
@@ -1011,7 +1055,7 @@ abstract class Model implements \JsonSerializable, \ArrayAccess
         $count     = 0;
         if ($resultSet) {
             foreach ($resultSet as $data) {
-                $result = $data->delete();
+                $result = $data->delete($force);
                 $count += $result;
             }
         }

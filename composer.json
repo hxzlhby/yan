@@ -22,7 +22,11 @@
         "topthink/think-captcha": "^1.0",
         "phpdr.net/php-curlmulti": "2.*",
         "jaeger/querylist": "^3.1",
-        "bupt1987/html-parser": "^3.0"
+        "bupt1987/html-parser": "^3.0",
+        "jaeger/querylist-ext-request": "^1.0",
+        "jaeger/querylist-ext-login": "^1.0",
+        "jaeger/querylist-ext-multi": "^1.0",
+        "jaeger/querylist-ext-dimage": "^1.1"
     },
     "extra": {
         "think-path": "thinkphp"
