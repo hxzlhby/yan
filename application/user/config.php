@@ -7,7 +7,7 @@
 
 define('UC_APP_ID', 1); //应用ID
 define('UC_API_TYPE', 'Model'); //可选值 Model / Service
-define('UC_AUTH_KEY', 'lq{":GZd*5df#SDS"D<IXdfE1236jWJ_.f~cEH[Lkj%U0'); //加密KEY
+define('UC_AUTH_KEY', 'V&)x%1N{M(fo?h;ZIzbSgw$!20+iJ:dP_7|8,9e.'); //加密KEY
 define('DATABASE', [
         // 数据库类型
         'type'        => 'mysql',

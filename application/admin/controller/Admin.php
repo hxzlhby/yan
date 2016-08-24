@@ -25,32 +25,32 @@ class Admin extends Controller
         
         // 是否是超级管理员
         define('IS_ROOT',   is_administrator());
-        if(!IS_ROOT && Config::get('ADMIN_ALLOW_IP')){
-            // 检查IP地址访问
-            if(!in_array(get_client_ip(),explode(',',Config::get('ADMIN_ALLOW_IP')))){
-                $this->error('403:禁止访问');
-            }
-        }
+//         if(!IS_ROOT && Config::get('ADMIN_ALLOW_IP')){
+//             // 检查IP地址访问
+//             if(!in_array(get_client_ip(),explode(',',Config::get('ADMIN_ALLOW_IP')))){
+//                 $this->error('403:禁止访问');
+//             }
+//         }
         
         // 检测系统权限
-        if(!IS_ROOT){
-            $access =   $this->accessControl();
-            if ( false === $access ) {
-                $this->error('403:禁止访问');
-            }elseif(null === $access ){
-                //检测访问权限
-                $rule  = strtolower(Request::instance()->module().'/'.Request::instance()->controller().'/'.Request::instance()->action());
-                if ( !$this->checkRule($rule,array('in','1,2')) ){
-                    $this->error('未授权访问!');
-                }else{
-                    // 检测分类及内容有关的各项动态权限
-                    $dynamic    =   $this->checkDynamic();
-                    if( false === $dynamic ){
-                        $this->error('未授权访问!');
-                    }
-                }
-            }
-        }
+//         if(!IS_ROOT){
+//             $access =   $this->accessControl();
+//             if ( false === $access ) {
+//                 $this->error('403:禁止访问');
+//             }elseif(null === $access ){
+//                 //检测访问权限
+//                 $rule  = strtolower(Request::instance()->module().'/'.Request::instance()->controller().'/'.Request::instance()->action());
+//                 if ( !$this->checkRule($rule,array('in','1,2')) ){
+//                     $this->error('未授权访问!');
+//                 }else{
+//                     // 检测分类及内容有关的各项动态权限
+//                     $dynamic    =   $this->checkDynamic();
+//                     if( false === $dynamic ){
+//                         $this->error('未授权访问!');
+//                     }
+//                 }
+//             }
+//         }
         $this->assign('__MENU__', $this->getMenus());
     }
     /**
@@ -135,7 +135,6 @@ class Admin extends Controller
     
             // 查找当前子菜单
             $pid = $menuModel->where("pid !=0 AND url like '%{$controller}/".Request::instance()->action()."%'")->column('pid');
-            dump($pid);
             if($pid){
                 // 查找当前主菜单
                 $nav =  $menuModel->find($pid);
@@ -147,8 +146,7 @@ class Admin extends Controller
                     if($item['id'] == $nav['id']){
                         $menus['main'][$key]['class']='current';
                         //生成child树
-                        $groups = $menuModel->where(array('group'=>array('neq',''),'pid' =>$item['id']))->distinct(true)->column("group",true);
-                        dump($groups);
+                        $groups = $menuModel->where(array('group'=>array('neq',''),'pid' =>$item['id']))->distinct(true)->column('group');
                         //获取二级分类的合法url
                         $where          =   array();
                         $where['pid']   =   $item['id'];
@@ -157,7 +155,6 @@ class Admin extends Controller
                             $where['is_dev']    =   0;
                         }
                         $second_urls = $menuModel->where($where)->column('id,url');
-                        dump($second_urls);
     
                         if(!IS_ROOT){
                             // 检测菜单权限

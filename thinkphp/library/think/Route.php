@@ -116,7 +116,6 @@ class Route
         } else {
             self::$rules['domain'][$domain]['[bind]'] = [$rule, $option, $pattern];
         }
-
     }
 
     private static function setDomain($domain)
@@ -139,12 +138,14 @@ class Route
     /**
      * 设置路由绑定
      * @access public
-     * @param string     $name 路由命名标识
-     * @return string|array
+     * @param string|array     $name 路由命名标识 数组表示批量设置
+     * @return array
      */
     public static function name($name = '')
     {
-        if ('' === $name) {
+        if (is_array($name)) {
+            return self::$name = $name;
+        } elseif ('' === $name) {
             return self::$name;
         } else {
             return isset(self::$name[$name]) ? self::$name[$name] : null;
@@ -302,7 +303,7 @@ class Route
         }
         $vars = self::parseVar($rule);
         if (isset($name)) {
-            self::$name[$name] = [$rule, $vars, self::$domain];
+            self::$name[$name][] = [$rule, $vars, self::$domain];
         }
         if ($group) {
             if ('*' != $type) {
