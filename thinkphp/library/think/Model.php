@@ -156,24 +156,6 @@ abstract class Model implements \JsonSerializable, \ArrayAccess
                 $query->name($this->name);
             }
 
-            if (!empty($this->field)) {
-                if (true === $this->field) {
-                    $type = $this->db()->getTableInfo('', 'type');
-                } else {
-                    $type = [];
-                    foreach ((array) $this->field as $key => $val) {
-                        if (is_int($key)) {
-                            $key = $val;
-                            $val = 'varchar';
-                        }
-                        $type[$key] = $val;
-                    }
-                }
-                $query->setFieldType($type);
-                $this->field = array_keys($type);
-                $query->allowField($this->field);
-            }
-
             if (!empty($this->pk)) {
                 $query->pk($this->pk);
             }
@@ -238,6 +220,8 @@ abstract class Model implements \JsonSerializable, \ArrayAccess
         if (is_string($data)) {
             $this->data[$data] = $value;
         } else {
+            // 清空数据
+            $this->data = [];
             if (is_object($data)) {
                 $data = get_object_vars($data);
             }
@@ -319,10 +303,12 @@ abstract class Model implements \JsonSerializable, \ArrayAccess
             }
             switch ($type) {
                 case 'datetime':
+                case 'date':
                     $format = !empty($param) ? $param : $this->dateFormat;
                     $value  = date($format, $_SERVER['REQUEST_TIME']);
                     break;
                 case 'timestamp':
+                case 'int':
                     $value = $_SERVER['REQUEST_TIME'];
                     break;
             }
@@ -776,9 +762,7 @@ abstract class Model implements \JsonSerializable, \ArrayAccess
     public function allowField($field)
     {
         if (true === $field) {
-            $field = $this->db()->getTableInfo('', 'type');
-            $this->db()->setFieldType($field);
-            $field = array_keys($field);
+            $field = $this->db()->getTableInfo('', 'fields');
         }
         $this->field = $field;
         return $this;
@@ -1063,6 +1047,8 @@ abstract class Model implements \JsonSerializable, \ArrayAccess
         } elseif ($data instanceof \Closure) {
             call_user_func_array($data, [ & $query]);
             $data = null;
+        } elseif (is_null($data)) {
+            return 0;
         }
         $resultSet = $query->select($data);
         $count     = 0;
@@ -1136,7 +1122,7 @@ abstract class Model implements \JsonSerializable, \ArrayAccess
         switch ($info['type']) {
             case Relation::HAS_MANY:
                 return $model->db()->alias('a')
-                    ->join($table . ' b', 'a.' . $info['localKey'] . '=b.' . $info['foreignKey'])
+                    ->join($table . ' b', 'a.' . $info['localKey'] . '=b.' . $info['foreignKey'], $info['joinType'])
                     ->group('b.' . $info['foreignKey'])
                     ->having('count(' . $id . ')' . $operator . $count);
             case Relation::HAS_MANY_THROUGH:
@@ -1169,7 +1155,7 @@ abstract class Model implements \JsonSerializable, \ArrayAccess
                 }
                 return $model->db()->alias('a')
                     ->field('a.*')
-                    ->join($table . ' b', 'a.' . $info['localKey'] . '=b.' . $info['foreignKey'])
+                    ->join($table . ' b', 'a.' . $info['localKey'] . '=b.' . $info['foreignKey'], $info['joinType'])
                     ->where($where);
             case Relation::HAS_MANY_THROUGH:
                 // TODO
