@@ -2,7 +2,7 @@
 // +----------------------------------------------------------------------
 // | ThinkPHP [ WE CAN DO IT JUST THINK IT ]
 // +----------------------------------------------------------------------
-// | Copyright (c) 2006-2015 http://thinkphp.cn All rights reserved.
+// | Copyright (c) 2006-2016 http://thinkphp.cn All rights reserved.
 // +----------------------------------------------------------------------
 // | Licensed ( http://www.apache.org/licenses/LICENSE-2.0 )
 // +----------------------------------------------------------------------
@@ -202,10 +202,6 @@ class Handle
         $message = $exception->getMessage();
         if (IS_CLI) {
             return $message;
-        }
-        // 导入语言包
-        if (!Config::get('lang_switch_on')) {
-            Lang::load(THINK_PATH . 'lang' . DS . Lang::detect() . EXT);
         }
 
         if (strpos($message, ':')) {

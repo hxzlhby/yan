@@ -13,6 +13,7 @@ namespace think\view\driver;
 
 use think\App;
 use think\exception\TemplateNotFoundException;
+use think\Loader;
 use think\Log;
 use think\Request;
 use think\Template;
@@ -23,6 +24,8 @@ class Think
     private $template;
     // 模板引擎参数
     protected $config = [
+        // 视图基础目录（集中式）
+        'view_base'   => '',
         // 模板起始路径
         'view_path'   => '',
         // 模板文件后缀
@@ -102,19 +105,22 @@ class Think
      */
     private function parseTemplate($template)
     {
+        // 分析模板文件规则
+        $request = Request::instance();
         // 获取视图根目录
         if (strpos($template, '@')) {
             // 跨模块调用
             list($module, $template) = explode('@', $template);
-            $path                    = APP_PATH . $module . DS . 'view' . DS;
+        }
+        if ($this->config['view_base']) {
+            // 基础视图目录
+            $module = isset($module) ? $module : $request->module();
+            $path   = $this->config['view_base'] . ($module ? $module . DS : '');
         } else {
-            // 当前视图目录
-            $path = $this->config['view_path'];
+            $path = isset($module) ? APP_PATH . $module . DS . 'view' . DS : $this->config['view_path'];
         }
 
-        // 分析模板文件规则
-        $request    = Request::instance();
-        $controller = $request->controller();
+        $controller = Loader::parseName($request->controller());
         if ($controller && 0 !== strpos($template, '/')) {
             $depr     = $this->config['view_depr'];
             $template = str_replace(['/', ':'], $depr, $template);
@@ -126,6 +132,26 @@ class Think
             }
         }
         return $path . ltrim($template, '/') . '.' . ltrim($this->config['view_suffix'], '.');
+    }
+
+    /**
+     * 配置或者获取模板引擎参数
+     * @access private
+     * @param string|array  $name 参数名
+     * @param mixed         $value 参数值
+     * @return mixed
+     */
+    public function config($name, $value = null)
+    {
+        if (is_array($name)) {
+            $this->template->config($name);
+            $this->config = array_merge($this->config, $name);
+        } elseif (is_null($value)) {
+            return $this->template->config($name);
+        } else {
+            $this->template->$name = $value;
+            $this->config[$name]   = $value;
+        }
     }
 
     public function __call($method, $params)

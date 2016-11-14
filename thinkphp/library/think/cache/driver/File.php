@@ -90,8 +90,7 @@ class File extends Driver
      */
     public function has($name)
     {
-        $filename = $this->getCacheKey($name);
-        return is_file($filename);
+        return $this->get($name) ? true : false;
     }
 
     /**
@@ -222,9 +221,13 @@ class File extends Driver
             $this->rm('tag_' . md5($tag));
             return true;
         }
-        $fileLsit = (array) glob($this->options['path'] . '*');
-        foreach ($fileLsit as $path) {
-            is_file($path) && unlink($path);
+        $files = (array) glob($this->options['path'] . ($this->options['prefix'] ? $this->options['prefix'] . DS : '') . '*');
+        foreach ($files as $path) {
+            if (is_dir($path)) {
+                array_map('unlink', glob($path . '/*.php'));
+            } else {
+                unlink($path);
+            }
         }
         return true;
     }

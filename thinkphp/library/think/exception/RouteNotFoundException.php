@@ -11,26 +11,14 @@
 
 namespace think\exception;
 
-class HttpException extends \RuntimeException
+use think\exception\HttpException;
+
+class RouteNotFoundException extends HttpException
 {
-    private $statusCode;
-    private $headers;
 
-    public function __construct($statusCode, $message = null, \Exception $previous = null, array $headers = [], $code = 0)
+    public function __construct()
     {
-        $this->statusCode = $statusCode;
-        $this->headers    = $headers;
-
-        parent::__construct($message, $code, $previous);
+        parent::__construct(404);
     }
 
-    public function getStatusCode()
-    {
-        return $this->statusCode;
-    }
-
-    public function getHeaders()
-    {
-        return $this->headers;
-    }
 }
