@@ -26,7 +26,8 @@
         "jaeger/querylist-ext-request": "^1.0",
         "jaeger/querylist-ext-login": "^1.0",
         "jaeger/querylist-ext-multi": "^1.0",
-        "jaeger/querylist-ext-dimage": "^1.1"
+        "jaeger/querylist-ext-dimage": "^1.1",
+        "paragonie/easyrsa": "^0.5.0"
     },
     "extra": {
         "think-path": "thinkphp"

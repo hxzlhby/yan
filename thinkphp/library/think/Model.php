@@ -380,7 +380,7 @@ abstract class Model implements \JsonSerializable, \ArrayAccess
                 if (empty($param)) {
                     $value = (float) $value;
                 } else {
-                    $value = (float) number_format($value, $param);
+                    $value = (float) number_format($value, $param, '.', '');
                 }
                 break;
             case 'boolean':
@@ -488,7 +488,7 @@ abstract class Model implements \JsonSerializable, \ArrayAccess
                 if (empty($param)) {
                     $value = (float) $value;
                 } else {
-                    $value = (float) number_format($value, $param);
+                    $value = (float) number_format($value, $param, '.', '');
                 }
                 break;
             case 'boolean':
@@ -870,11 +870,12 @@ abstract class Model implements \JsonSerializable, \ArrayAccess
                 }
             }
 
-            if (!empty($data) && $this->autoWriteTimestamp && $this->updateTime && !isset($data[$this->updateTime])) {
+            if (empty($data) || (count($data) == 1 && is_string($pk) && isset($data[$pk]))) {
+                // 没有更新
+                return 0;
+            } elseif ($this->autoWriteTimestamp && $this->updateTime && !isset($data[$this->updateTime])) {
                 // 自动写入更新时间
                 $data[$this->updateTime] = $this->autoWriteTimestamp($this->updateTime);
-            } else {
-                return 0;
             }
 
             if (empty($where) && !empty($this->updateWhere)) {
