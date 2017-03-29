@@ -28,8 +28,8 @@ class UcenterMember extends Model{
 	// password属性修改器
 	protected function setPasswordAttr($value)
 	{
-	    $key = \think\Config::get('uc_auth_key');
-	    return think_ucenter_md5($value,$key);
+// 	    $key = \think\Config::get('uc_auth_key');
+	    return think_ucenter_md5($value,UC_AUTH_KEY);
 	}
 	
 	// reg_ip属性修改器

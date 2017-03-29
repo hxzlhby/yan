@@ -68,7 +68,7 @@ class UcenterMember extends Model{
 		$user = $model->where($map)->find();
 		if(is_object($user) && $user->status){
 			/* 验证用户密码 */
-			if(think_ucenter_md5($password, \think\Config::get('uc_auth_key','user')) === $user->password){
+			if(think_ucenter_md5($password, UC_AUTH_KEY) === $user->password){
 				$this->updateLogin($user->id); //更新用户登录信息
 				return $user->id; //登录成功，返回用户ID
 			} else {
@@ -183,7 +183,7 @@ class UcenterMember extends Model{
 	protected function verifyUser($uid, $password_in){
 		$model = new UcenterMemberModel();
 		$password = $model::where('id',$uid)->value('password');
-		if(think_ucenter_md5($password_in, \think\Config::get('uc_auth_key','user')) === $password){
+		if(think_ucenter_md5($password_in, UC_AUTH_KEY) === $password){
 			return true;
 		}
 		return false;
