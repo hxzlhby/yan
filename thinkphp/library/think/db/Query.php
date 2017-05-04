@@ -1911,7 +1911,7 @@ class Query
             $relation = Loader::parseName($relation, 1, false);
             $model    = $class->$relation();
             if ($model instanceof OneToOne && 0 == $model->getEagerlyType()) {
-                $model->removeOption()->eagerly($this, $relation, $subRelation, $closure, $first);
+                $model->eagerly($this, $relation, $subRelation, $closure, $first);
                 $first = false;
             } elseif ($closure) {
                 $with[$key] = $closure;
@@ -1999,7 +1999,7 @@ class Query
             $relation = explode(',', $relation);
         }
         if (isset($this->options['relation'])) {
-            $this->options['relation'] = array_mrege($this->options['relation'], $relation);
+            $this->options['relation'] = array_merge($this->options['relation'], $relation);
         } else {
             $this->options['relation'] = $relation;
         }
